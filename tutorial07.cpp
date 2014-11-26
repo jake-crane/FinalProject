@@ -20,6 +20,17 @@ using namespace glm;
 #include <controls.hpp>
 #include <objloader.hpp>
 
+using namespace std;
+
+struct Shape {
+	GLuint texture;
+	vector<vec3> vertices;
+	vector<vec2> uvs;
+	vector<vec3> normals;
+	GLuint vertexbuffer;
+	GLuint uvbuffer;
+};
+
 int main( void )
 {
 	// Initialise GLFW
@@ -71,51 +82,39 @@ int main( void )
 	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-	// Load the texture
-	GLuint redTexture = loadBMP_custom("red.bmp");
-	GLuint blueTexture = loadBMP_custom("blue.bmp");
-
-	// Get a handle for our "myTextureSampler" uniform
 	GLuint myTextureSamplerUniformLocation  = glGetUniformLocation(programID, "myTextureSampler");
 
-	// Read our .obj file
-	std::vector<glm::vec3> vertices1;
-	std::vector<glm::vec2> uvs1;
-	std::vector<glm::vec3> normals1; // Won't be used at the moment.
-	std::vector<glm::vec3> vertices2;
-	std::vector<glm::vec2> uvs2;
-	std::vector<glm::vec3> normals2; // Won't be used at the moment.
-	bool res1 = loadOBJ("cube.obj", vertices1, uvs1, normals1);
-	bool res2 = loadOBJ("sphere.obj", vertices2, uvs2, normals2);
+	char *filePaths[] = {
+			"red.bmp", "cube.obj",
+			"blue.bmp", "sphere.obj",
+			"grass.bmp", "plane.obj",
+			"minecraft_texture.bmp", "minecraft_cube.obj"
+	};
 
-	if (!res1 || !res2) {
-		perror("error");
-		return 1;
+	const int shapeCount = 4;
+	Shape shapes[shapeCount];
+
+	int fileIndex = 0;
+	for (int i = 0; i < shapeCount; i++, fileIndex += 2) {
+		shapes[i].texture = loadBMP_custom(filePaths[fileIndex]);
+		if (!loadOBJ(filePaths[fileIndex + 1], shapes[i].vertices, shapes[i].uvs, shapes[i].normals)) {
+			perror("Error loading obj file");
+			fprintf(stderr, "%s\n", filePaths[fileIndex + 1]);
+			return 1;
+		}
 	}
 
-	// Load it into a VBO
+	for (int i = 0; i < shapeCount; ++i) {
+		glGenBuffers(1, &shapes[i].vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, shapes[i].vertexbuffer);
+		glBufferData(GL_ARRAY_BUFFER, shapes[i].vertices.size() * sizeof(glm::vec3), &shapes[i].vertices[0], GL_STATIC_DRAW);
 
-	GLuint vertexbuffer1;
-	glGenBuffers(1, &vertexbuffer1);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer1);
-	glBufferData(GL_ARRAY_BUFFER, vertices1.size() * sizeof(glm::vec3), &vertices1[0], GL_STATIC_DRAW);
+		glGenBuffers(1, &shapes[i].uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, shapes[i].uvbuffer);
+		glBufferData(GL_ARRAY_BUFFER, shapes[i].uvs.size() * sizeof(glm::vec2), &shapes[i].uvs[0], GL_STATIC_DRAW);
+	}
 
-	GLuint uvbuffer1;
-	glGenBuffers(1, &uvbuffer1);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer1);
-	glBufferData(GL_ARRAY_BUFFER, uvs1.size() * sizeof(glm::vec2), &uvs1[0], GL_STATIC_DRAW);
-
-	GLuint vertexbuffer2;
-	glGenBuffers(1, &vertexbuffer2);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer2);
-	glBufferData(GL_ARRAY_BUFFER, vertices2.size() * sizeof(glm::vec3), &vertices2[0], GL_STATIC_DRAW);
-
-	GLuint uvbuffer2;
-	glGenBuffers(1, &uvbuffer2);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer2);
-	glBufferData(GL_ARRAY_BUFFER, uvs2.size() * sizeof(glm::vec2), &uvs2[0], GL_STATIC_DRAW);
-
-	do{
+	do {
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -135,79 +134,44 @@ int main( void )
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 
+		for (int i = 0; i < shapeCount; ++i) {
 
 
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, shapes[i].texture);
 
-		//draw cube
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, redTexture);
-		// Set our "myTextureSampler" sampler to user Texture Unit 0
-		glUniform1i(myTextureSamplerUniformLocation, 0);
+			glUniform1i(myTextureSamplerUniformLocation, 0);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer1);
-		glVertexAttribPointer(
-				0,                  // attribute
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-		);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[i].vertexbuffer);
+			glVertexAttribPointer(
+					0,                  // attribute
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					0,                  // stride
+					(void*)0            // array buffer offset
+			);
 
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer1);
-		glVertexAttribPointer(
-				1,                                // attribute
-				2,                                // size
-				GL_FLOAT,                         // type
-				GL_FALSE,                         // normalized?
-				0,                                // stride
-				(void*)0                          // array buffer offset
-		);
-
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, vertices1.size() );
+			// 2nd attribute buffer : UVs
+			glEnableVertexAttribArray(1);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[i].uvbuffer);
+			glVertexAttribPointer(
+					1,                                // attribute
+					2,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					(void*)0                          // array buffer offset
+			);
 
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+			glDrawArrays(GL_TRIANGLES, 0, shapes[i].vertices.size() );
 
+			glDisableVertexAttribArray(0);
+			glDisableVertexAttribArray(1);
 
-		//draw sphere
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, blueTexture);
-		glUniform1i(myTextureSamplerUniformLocation, 0);
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer2);
-		glVertexAttribPointer(
-				0,                  // attribute
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-		);
-
-		// 2nd attribute buffer : UVs
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer2);
-		glVertexAttribPointer(
-				1,                                // attribute
-				2,                                // size
-				GL_FLOAT,                         // type
-				GL_FALSE,                         // normalized?
-				0,                                // stride
-				(void*)0                          // array buffer offset
-		);
-
-		glDrawArrays(GL_TRIANGLES, 0, vertices2.size());
-
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+		}
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -217,13 +181,12 @@ int main( void )
 	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
 			glfwWindowShouldClose(window) == 0 );
 
-	// Cleanup VBO and shader
-	glDeleteBuffers(1, &vertexbuffer1);
-	glDeleteBuffers(1, &uvbuffer1);
-	glDeleteProgram(programID);
-	glDeleteTextures(1, &myTextureSamplerUniformLocation);
-	//glDeleteVertexArrays(1, &VertexArrayID);
-
+	for (int i = 0; i < shapeCount; ++i) {
+		glDeleteBuffers(1, &shapes[i].vertexbuffer);
+		glDeleteBuffers(1, &shapes[i].uvbuffer);
+		glDeleteProgram(programID);
+		glDeleteTextures(1, &myTextureSamplerUniformLocation);
+	}
 	/*glDeleteBuffers(2, &vertexbuffer2);
 		glDeleteBuffers(2, &uvbuffer2);
 		glDeleteProgram(programID);
