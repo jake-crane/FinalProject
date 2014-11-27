@@ -29,6 +29,7 @@ struct Shape {
 	vector<vec3> normals;
 	GLuint vertexbuffer;
 	GLuint uvbuffer;
+	GLuint normalbuffer;
 };
 
 int main( void )
@@ -46,7 +47,7 @@ int main( void )
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Tutorial 07 - Model Loading", NULL, NULL);
+	window = glfwCreateWindow( 1024, 768, "Final Project", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		glfwTerminate();
@@ -77,10 +78,11 @@ int main( void )
 	glEnable(GL_CULL_FACE);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "TransformVertexShader.vertexshader", "TextureFragmentShader.fragmentshader" );
+	GLuint programID = LoadShaders( "StandardShading.vertexshader", "StandardShading.fragmentshader" );
 
-	// Get a handle for our "MVP" uniform
 	GLuint MatrixID = glGetUniformLocation(programID, "MVP");
+	GLuint ViewMatrixID = glGetUniformLocation(programID, "V");
+	GLuint ModelMatrixID = glGetUniformLocation(programID, "M");
 
 	GLuint myTextureSamplerUniformLocation  = glGetUniformLocation(programID, "myTextureSampler");
 
@@ -112,7 +114,14 @@ int main( void )
 		glGenBuffers(1, &shapes[i].uvbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, shapes[i].uvbuffer);
 		glBufferData(GL_ARRAY_BUFFER, shapes[i].uvs.size() * sizeof(glm::vec2), &shapes[i].uvs[0], GL_STATIC_DRAW);
+
+		glGenBuffers(1, &shapes[i].normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, shapes[i].normalbuffer);
+		glBufferData(GL_ARRAY_BUFFER, shapes[i].normals.size() * sizeof(glm::vec3), &shapes[i].normals[0], GL_STATIC_DRAW);
 	}
+
+	glUseProgram(programID);
+	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
 
 	do {
 
@@ -132,6 +141,11 @@ int main( void )
 		// Send our transformation to the currently bound shader, 
 		// in the "MVP" uniform
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+
+		glm::vec3 lightPos = glm::vec3(5,6,0);
+		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
 
 
 		for (int i = 0; i < shapeCount; ++i) {
@@ -165,11 +179,23 @@ int main( void )
 					(void*)0                          // array buffer offset
 			);
 
+			glEnableVertexAttribArray(2);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[i].normalbuffer);
+			glVertexAttribPointer(
+					2,                                // attribute
+					3,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					(void*)0                          // array buffer offset
+			);
+
 
 			glDrawArrays(GL_TRIANGLES, 0, shapes[i].vertices.size() );
 
 			glDisableVertexAttribArray(0);
 			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(2);
 
 		}
 
