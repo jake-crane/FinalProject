@@ -64,6 +64,7 @@ int main( void )
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPos(window, 1024/2, 768/2);
 
 	// Dark blue background
@@ -90,10 +91,10 @@ int main( void )
 			"red.bmp", "cube.obj",
 			"blue.bmp", "sphere.obj",
 			"grass.bmp", "plane.obj",
-			"minecraft_texture.bmp", "minecraft_cube.obj"
+			"minecraft_texture.bmp", "minecraft_cube.obj",
 	};
 
-	const int shapeCount = 4;
+	const int shapeCount = sizeof(filePaths) / sizeof(char*) / 2;
 	Shape shapes[shapeCount];
 
 	int fileIndex = 0;
@@ -121,7 +122,10 @@ int main( void )
 	}
 
 	glUseProgram(programID);
-	GLuint LightID = glGetUniformLocation(programID, "LightPosition_worldspace");
+	GLuint LightID1 = glGetUniformLocation(programID, "LightPosition1_worldspace");
+
+	glUseProgram(programID);
+	GLuint LightID2 = glGetUniformLocation(programID, "LightPosition2_worldspace");
 
 	do {
 
@@ -144,12 +148,14 @@ int main( void )
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-		glm::vec3 lightPos = glm::vec3(5,6,0);
-		glUniform3f(LightID, lightPos.x, lightPos.y, lightPos.z);
+		glm::vec3 light1Pos = glm::vec3(5,6,0);
+		glUniform3f(LightID1, light1Pos.x, light1Pos.y, light1Pos.z);
+
+		glm::vec3 light2Pos = glm::vec3(-5, 6, 0);
+		glUniform3f(LightID2, light2Pos.x, light2Pos.y, light2Pos.z);
 
 
 		for (int i = 0; i < shapeCount; ++i) {
-
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, shapes[i].texture);
