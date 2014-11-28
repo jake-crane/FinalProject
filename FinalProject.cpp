@@ -92,6 +92,7 @@ int main( void )
 			"blue.bmp", "sphere.obj",
 			"grass.bmp", "plane.obj",
 			"minecraft_texture.bmp", "minecraft_cube.obj",
+			"soccerball.bmp", "soccerball.obj",
 	};
 
 	const int shapeCount = sizeof(filePaths) / sizeof(char*) / 2;
