@@ -95,6 +95,8 @@ int main( void )
 			"soccerball.bmp", "soccerball.obj",
 			"cone.bmp", "cone.obj",
 			"banshee.bmp", "banshee.obj",
+			"spyro.bmp", "spyro.obj",
+			"di.bmp", "di.obj",
 	};
 
 	const int shapeCount = sizeof(filePaths) / sizeof(char*) / 2;
