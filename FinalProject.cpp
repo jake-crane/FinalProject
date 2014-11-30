@@ -98,6 +98,7 @@ int main( void )
 			"spyro.bmp", "spyro.obj",
 			"di.bmp", "di.obj",
 			"MasterChief.bmp", "MasterChief.obj",
+			"crash.bmp", "crash.obj",
 	};
 
 	const int shapeCount = sizeof(filePaths) / sizeof(char*) / 2;
