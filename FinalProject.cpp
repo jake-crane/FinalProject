@@ -20,6 +20,8 @@ using namespace glm;
 #include <controls.hpp>
 #include <objloader.hpp>
 
+#define M_PI 3.14159265358979323846
+
 using namespace std;
 
 struct Shape {
@@ -89,7 +91,7 @@ int main( void )
 
 	char *filePaths[] = {
 			"red.bmp", "cube.obj",
-			"blue.bmp", "sphere.obj",
+			"yellow.bmp", "sphere.obj",
 			"grass.bmp", "plane.obj",
 			"minecraft_texture.bmp", "minecraft_cube.obj",
 			"soccerball.bmp", "soccerball.obj",
@@ -134,6 +136,23 @@ int main( void )
 	glUseProgram(programID);
 	GLuint LightID2 = glGetUniformLocation(programID, "LightPosition2_worldspace");
 
+	double lastTime = glfwGetTime() - 10;
+
+	//yellow sphere orbit variables
+	const float velocity = M_PI / 144;
+	const int radius = 10;
+	const float originx = 0, originy = 0, originz = 0;
+	float angle_of_rotation = 0.0f;
+
+	vector<vec3> yellow_sphere_origin_verticues(shapes[1].vertices.size());
+	for (unsigned int j = 0; j < shapes[1].vertices.size(); j++) {
+		yellow_sphere_origin_verticues[j].x = shapes[1].vertices[j].x - 3;
+		yellow_sphere_origin_verticues[j].y = shapes[1].vertices[j].y + 1;
+		yellow_sphere_origin_verticues[j].z = shapes[1].vertices[j].z - 1;
+	}
+
+	glm::vec3 light2Pos = glm::vec3(0, 1.0f, 0);
+
 	do {
 
 		// Clear the screen
@@ -155,14 +174,42 @@ int main( void )
 		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
 		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
 
-		glm::vec3 light1Pos = glm::vec3(5,6,0);
+		double currentTime = glfwGetTime();
+
+		if (currentTime - lastTime >= .01) {
+			angle_of_rotation += velocity ;
+			if (angle_of_rotation >= 2 * M_PI) {
+				angle_of_rotation = 0;
+			}
+			for (unsigned int j = 0; j < shapes[1].vertices.size(); j++) {
+				shapes[1].vertices[j].x = yellow_sphere_origin_verticues[j].x + originx + radius * cos(angle_of_rotation);
+				shapes[1].vertices[j].z = yellow_sphere_origin_verticues[j].z + originz + radius * sin(angle_of_rotation);
+			}
+			light2Pos.x = originx + radius * cos(angle_of_rotation);
+			light2Pos.z = originz + radius * sin(angle_of_rotation);
+
+			glGenBuffers(1, &shapes[1].vertexbuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[1].vertexbuffer);
+			glBufferData(GL_ARRAY_BUFFER, shapes[1].vertices.size() * sizeof(glm::vec3), &shapes[1].vertices[0], GL_STATIC_DRAW);
+
+			glGenBuffers(1, &shapes[1].uvbuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[1].uvbuffer);
+			glBufferData(GL_ARRAY_BUFFER, shapes[1].uvs.size() * sizeof(glm::vec2), &shapes[1].uvs[0], GL_STATIC_DRAW);
+
+			glGenBuffers(1, &shapes[1].normalbuffer);
+			glBindBuffer(GL_ARRAY_BUFFER, shapes[1].normalbuffer);
+			glBufferData(GL_ARRAY_BUFFER, shapes[1].normals.size() * sizeof(glm::vec3), &shapes[1].normals[0], GL_STATIC_DRAW);
+			lastTime = glfwGetTime();
+		}
+
+
+		glm::vec3 light1Pos = glm::vec3(5, 6, 0);
 		glUniform3f(LightID1, light1Pos.x, light1Pos.y, light1Pos.z);
 
-		glm::vec3 light2Pos = glm::vec3(-5, 6, 0);
 		glUniform3f(LightID2, light2Pos.x, light2Pos.y, light2Pos.z);
 
 
-		for (int i = 0; i < shapeCount; ++i) {
+		for (int i = 0; i < shapeCount; i++) {
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, shapes[i].texture);
