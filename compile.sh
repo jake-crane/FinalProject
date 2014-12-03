@@ -15,5 +15,5 @@ g++ *.cpp \
 	-lopengl32 \
 	-lglu32 \
 	-lGdi32 \
-	&& ./a.exe
-	
+	-std=c++11 \
+	-o FinalProject.exe
