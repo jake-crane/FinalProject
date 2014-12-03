@@ -89,7 +89,7 @@ int main( void )
 
 	GLuint myTextureSamplerUniformLocation  = glGetUniformLocation(programID, "myTextureSampler");
 
-	char *filePaths[] = {
+	const char *filePaths[] = {
 			"red.bmp", "cube.obj",
 			"yellow.bmp", "sphere.obj",
 			"grass.bmp", "plane.obj",
