@@ -6,6 +6,7 @@ Features:
 11 textured objects
 two lights
 a flying camera
+objacts have material properties
 an orbiting yellow light and sphere.
 
 Requirements:

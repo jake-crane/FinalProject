@@ -1,3 +1,4 @@
+#!/bin/bash
 g++ *.cpp \
 	-D GLEW_STATIC \
 	-D GLM_FORCE_RADIANS \
