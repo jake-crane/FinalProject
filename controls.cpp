@@ -71,6 +71,19 @@ void computeMatricesFromInputs(){
 	// Up vector
 	glm::vec3 up = glm::cross( right, direction );
 
+	if (glfwGetKey( window, GLFW_KEY_D ) == GLFW_PRESS){
+		horizontalAngle += mouseSpeed * float(1024/2 - xpos - 1 );
+	}
+	if (glfwGetKey( window, GLFW_KEY_A ) == GLFW_PRESS){
+		horizontalAngle += mouseSpeed * float(1024/2 - xpos + 1 );
+	}
+	if (glfwGetKey( window, GLFW_KEY_W ) == GLFW_PRESS){
+		verticalAngle   += mouseSpeed * float( 768/2 - ypos + 1 );
+	}
+	if (glfwGetKey( window, GLFW_KEY_S ) == GLFW_PRESS){
+		verticalAngle   += mouseSpeed * float( 768/2 - ypos - 1 );
+	}
+
 	// Move forward
 	if (glfwGetKey( window, GLFW_KEY_UP ) == GLFW_PRESS){
 		position += direction * deltaTime * speed;
