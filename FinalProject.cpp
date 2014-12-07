@@ -21,6 +21,8 @@ using namespace glm;
 #include <objloader.hpp>
 
 #define M_PI 3.14159265358979323846
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
 
 using namespace std;
 
@@ -49,12 +51,16 @@ int main( void )
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Final Project", NULL, NULL);
+	window = glfwCreateWindow( WINDOW_WIDTH, WINDOW_HEIGHT, "Final Project", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		glfwTerminate();
 		return -1;
 	}
+
+	const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	glfwSetWindowPos(window, (mode->width / 2) - (WINDOW_WIDTH / 2), (mode->height / 2) - (WINDOW_HEIGHT / 2));
+
 	glfwMakeContextCurrent(window);
 
 	// Initialize GLEW
