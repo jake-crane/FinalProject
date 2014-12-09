@@ -19,6 +19,7 @@ two lights
 a flying camera
 objacts have material properties
 an orbiting yellow light and sphere.
+The w, a, s, and d keys can be used to rotate the camera (this is helpful for rotating the camera from a remote connection)
 
 Requirements:
 glew
